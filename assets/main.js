@@ -13,40 +13,83 @@ class Validarformulario{
     handleSubmit(e){
         e.preventDefault();
         const camposValidos = this.camposSaoValidos();
-        const usuarioValido = this.usuariosValidos();
-        const senhaValida = this.senhaValida();
+
+        if(camposValidos){
+            alert('Enviado')
+            this.formulario.submit();
+        }
     }
 
     camposSaoValidos(){
-        let validCampos = true;
+        let valid = true;
+
+        for(let errorText of this.formulario.querySelectorAll('.error-text')){
+            errorText.remove();
+        }
+
         for(let campo of this.formulario.querySelectorAll('.validar')){
+            const label = campo.previousElementSibling.innerHTML;
+
             if(!campo.value){
-                this.criaErroCampo(campo,'Não pode ficar em branco')
-                validCampos = false;
+                this.criaErroCampo(campo, `Campo ${label} não pode está em branco`)
+                valid = false;
+                continue;
+            }
+
+            if(campo.classList.contains('cpf')){
+                if(!this.validaCpf(campo)) valid = false;
+            }
+
+            if(campo.classList.contains('usuario')){
+                if(!this.usuariosValidos(campo)) valid = false;
+            }
+
+            if(campo.classList.contains('senha')){
+                if(!this.senhaValida(campo)) valid = false;
             }
         }
+
+        return valid
     }   
-    usuariosValidos(){
-        let validUsuarios = true
-        const letrasNumeros = /^[\p{L}\p{N}]+$/u
-        const tamanhoLetras = /^[\p{L}]{6,12}$/u
-        if(!this.formulario.querySelector('.nome') === letrasNumeros){
-            this.criaErroUsuario('Usuario só pode contem letras/ou números')
-            this.validUsuarios = false;
+    usuariosValidos(campo){
+        let valid = true;
+        const usuario = this.formulario.querySelector('.usuario')
+        if(!usuario.value.match(/^[a-zA-Z0-9]+$/)){
+            this.criaErroCampo(campo, 'Usuario só pode contem letras/ou números')
+            valid = false;
         }
-        if(!this.formulario.querySelector('.nome') === tamanhoLetras){
-            this.criaErroUsuario('Usuario so pode conter entre 6 a 12 caracteres');
-            this.validUsuarios = false
+        if(usuario.value.length < 6 || usuario.value.length > 12 ){
+            this.criaErroCampo(campo, 'Usuario so pode conter entre 6 a 12 caracteres');
+            valid = false
         }
+
+        return valid
     }
 
-    senhaValida(){
-        let validSenha = true
-        const tamanhoLetras = /^[\p{L}]{6,12}$/u
-        if(!this.formulario.querySelector('.senha') === tamanhoLetres){
-            this.criaErroUsuario('A senha so pode conter entre 6 a 12 caracteres');
-            this.validSenha = false
+    senhaValida(campo){
+        let valid = true;
+        const senha = this.formulario.querySelector('.senha');
+        const senhaRepetida = this.formulario.querySelector('.senha-repetida');
+        if(senha.value.length < 6 || senha.value.length > 12 ){
+            this.criaErroCampo(senha, 'A senha so pode conter entre 6 a 12 caracteres');
+            valid = false;
         }
+        if(senhaRepetida.value !== senha.value){
+            this.criaErroCampo(senhaRepetida, 'Senha invalida, use a senha que você colocou');
+            valid = false;
+        }
+
+        return valid
+    }
+
+    validaCpf(campo){
+        const cpf = new ValidaCPF(campo.value);
+        if(!cpf.valida()){
+            this.criaErroCampo(campo, 'Cpf Invalido')
+            return false;
+        }
+        return true
+
     }
 
     criaErroCampo(campo, msg){
@@ -55,13 +98,6 @@ class Validarformulario{
         div.classList.add('error-text');
         campo.insertAdjacentElement('afterend', div);
     }
-
-    criaErroUsuario(msg){
-        const criaErroUs = document.createElement('p')
-        criaErroUs.innerHTML = msg
-        criaErroUs.classList.add('error-usuario')
-    }
-
 
 }
 
